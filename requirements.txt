@@ -1,0 +1,8 @@
+numpy
+torch
+matplotlib
+healpy
+camb
+pysm3
+scipy
+typing-extensions
