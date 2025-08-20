@@ -116,17 +116,83 @@ For ODE sampling, set `--method ode`.  For predictor–corrector sampling, set `
 
 To explore the impact of different tensor–to–scalar ratios, repeat the data generation and training steps for each `r` value of interest.  Since the data dimensionality (`2⋅NSIDE−2`) is fixed, the same model architecture can be reused.  The sampling scripts accept the same SDE parameters but should be run with the corresponding model checkpoint and datasets.
 
-## Notes on theory
+## Notes on Theory
 
-* **Variance–exploding SDE** (VE):
-  \[\mathrm{d}\mathbf{x} = g(t)\,\mathrm{d}W_t\,,\]\n+
-  where the diffusion coefficient \(g(t) = \sigma_{\min}\, (\sigma_{\max}/\sigma_{\min})^t\sqrt{2\,\log\big(\sigma_{\max}/\sigma_{\min}\big)}\).  The marginal distribution at time \(t\in[0,1]\) is \(\mathbf{x}_t = \mathbf{x}_0 + \sigma(t)\,\mathbf{z}\) with \(\sigma(t) = \sigma_{\min}\sqrt{(\sigma_{\max}/\sigma_{\min})^{2t}-1}\) and \(\mathbf{z}\sim\mathcal{N}(0,I)\)【53971070480753†L540-L547】.  In the reverse process, the drift term is \(g(t)^2\nabla_{\mathbf{x}} \log p_t(\mathbf{x})\).  The corresponding probability–flow ODE replaces this drift with \(-\tfrac{1}{2}g(t)^2\nabla_{\mathbf{x}}\log p_t(\mathbf{x})\).
+**Variance–exploding SDE (VE):**
 
-* **Variance–preserving SDE** (VP):
-  \[\mathrm{d}\mathbf{x} = -\tfrac{1}{2}\beta(t)\,\mathbf{x}\,\mathrm{d}t + \sqrt{\beta(t)}\,\mathrm{d}W_t\,,\]\n+
-  with a scalar noise schedule \(\beta(t)\).  A common choice is a linear schedule \(\beta(t)=\beta_{\min} + (\beta_{\max}-\beta_{\min})t\).  The marginal distribution of \(\mathbf{x}_t\) given \(\mathbf{x}_0\) has mean \(\exp\big(-\tfrac{1}{2}\int_0^t \beta(s)\,\mathrm{d}s\big)\,\mathbf{x}_0\) and standard deviation \(\sqrt{1 - \exp\big(-\int_0^t \beta(s)\,\mathrm{d}s\big)}\).  The reverse SDE includes both the negative drift \(-\tfrac{1}{2}\beta(t)\mathbf{x}\) and a score–based term \(-\beta(t)\nabla_{\mathbf{x}}\log p_t(\mathbf{x})\).  The probability–flow ODE uses \(-\tfrac{1}{2}\beta(t)[\mathbf{x} + \nabla_{\mathbf{x}}\log p_t(\mathbf{x})]\) for its drift【53971070480753†L540-L547】.
+$$
+\mathrm{d}\mathbf{x} = g(t)\,\mathrm{d}W_t\,,
+$$
 
-These formulations follow the general framework of score–based generative modelling through stochastic differential equations【53971070480753†L540-L547】.  The provided implementations keep the mathematical details transparent so that users can adapt them for other datasets or noise schedules.
+where the diffusion coefficient 
+
+$$
+g(t) = \sigma_{\min}\, \left(\frac{\sigma_{\max}}{\sigma_{\min}}\right)^t \sqrt{2\,\log\left(\frac{\sigma_{\max}}{\sigma_{\min}}\right)}
+$$
+
+The marginal distribution at time $t \in [0,1]$ is
+
+$$
+\mathbf{x}_t = \mathbf{x}_0 + \sigma(t)\,\mathbf{z}
+$$
+
+with
+
+$$
+\sigma(t) = \sigma_{\min} \sqrt{\left(\frac{\sigma_{\max}}{\sigma_{\min}}\right)^{2t} - 1}
+$$
+
+and $\mathbf{z} \sim \mathcal{N}(0,I)$.
+
+In the reverse process, the drift term is
+
+$$
+g(t)^2 \nabla_{\mathbf{x}} \log p_t(\mathbf{x})
+$$
+
+The corresponding probability–flow ODE replaces this drift with
+
+$$
+-\frac{1}{2}g(t)^2 \nabla_{\mathbf{x}}\log p_t(\mathbf{x})
+$$
+
+---
+
+**Variance–preserving SDE (VP):**
+
+$$
+\mathrm{d}\mathbf{x} = -\frac{1}{2}\beta(t)\,\mathbf{x}\,\mathrm{d}t + \sqrt{\beta(t)}\,\mathrm{d}W_t\,,
+$$
+
+with a scalar noise schedule $\beta(t)$. A common choice is a linear schedule:
+
+$$
+\beta(t)=\beta_{\min} + (\beta_{\max}-\beta_{\min})t
+$$
+
+The marginal distribution of $\mathbf{x}_t$ given $\mathbf{x}_0$ has mean
+
+$$
+\exp\left(-\frac{1}{2}\int_0^t \beta(s)\,\mathrm{d}s\right)\,\mathbf{x}_0
+$$
+
+and standard deviation
+
+$$
+\sqrt{1 - \exp\left(-\int_0^t \beta(s)\,\mathrm{d}s\right)}
+$$
+
+The reverse SDE includes both the negative drift $-\frac{1}{2}\beta(t)\mathbf{x}$ and a score–based term $-\beta(t)\nabla_{\mathbf{x}}\log p_t(\mathbf{x})$. The probability–flow ODE uses
+
+$$
+-\frac{1}{2}\beta(t)\left[\mathbf{x} + \nabla_{\mathbf{x}}\log p_t(\mathbf{x})\right]
+$$
+
+for its drift.
+
+---
+
+These formulations follow the general framework of **score–based generative modelling through stochastic differential equations**. The provided implementations keep the mathematical details transparent so that users can adapt them for other datasets or noise schedules.
 
 ## Contact
 
